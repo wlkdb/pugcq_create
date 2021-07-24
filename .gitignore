@@ -1,0 +1,11 @@
+labels/
+downloads/
+temp/
+videos/
+*.xlsx
+*.xls
+*.zip
+.idea/
+__pycache__/
+outputs/
+

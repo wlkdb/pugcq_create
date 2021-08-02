@@ -71,7 +71,7 @@ def handle(pugcq_excel, golden_excel, output_dir="temp"):
     subject_df.to_excel(subject_writer, sheet_name=OVERALL, float_format="%0.2f")
     subject_writer.save()
 
-    # drop invalid subject
+    # drop invalid subjects
     subject_valid = subject_df[subject_df["valid"]].index
     print("invalid subject =", subject_df[~subject_df["valid"]].index.to_list())
     pugcq_valid = pugcq[subject_valid]
@@ -107,6 +107,16 @@ def handle(pugcq_excel, golden_excel, output_dir="temp"):
     return mos_df
 
 
+def add_few_data(mos_combine_df, golden_excel, target_length=10002):
+    need_data_num = target_length - len(mos_combine_df)
+    golden = pd.read_excel(golden_excel, index_col=0)
+    golden = golden.iloc[-need_data_num:]
+    golden["overall_quartile"] = golden["overall"]
+    golden["overall_valid_subject"] = golden["overall"]
+
+    return mos_combine_df.append(golden)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input_dir", default='labels', help="Directory of original pugcq subject labels.")
@@ -125,13 +135,18 @@ if __name__ == '__main__':
     for i in range(len(pugcq_excel_list)):
         print(pugcq_excel_list[i], golden_excel_list[i])
         mos_df = handle(pugcq_excel_list[i], golden_excel_list[i], args.output_dir)
+        mos_df["batch"] = i + 1
         mos_combine_df = mos_df if i == 0 else mos_combine_df.append(mos_df)
         print()
+
+    # add few videos from golden
+    mos_combine_df = add_few_data(mos_combine_df, golden_excel_list[-1])
 
     # merge with basic info
     basic_info_path = os.path.join(args.input_dir, "basic_info.xls")
     basic_info = pd.read_excel(basic_info_path, index_col=0)
     mos_combine_df = pd.merge(basic_info, mos_combine_df, left_index=True, right_index=True)
+    mos_combine_df = mos_combine_df.iloc[:10000]
 
     # output combine mos
     output_mos_path = os.path.join(args.output_dir, "pugcq_mos.xls")

@@ -8,4 +8,5 @@ videos/
 .idea/
 __pycache__/
 outputs/
+gen_basic_info.py
 
